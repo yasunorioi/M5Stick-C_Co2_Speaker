@@ -6,6 +6,7 @@
 #include <Wire.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
+#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 
 const int servo_pin = 26;
 int freq            = 50;
@@ -21,12 +22,6 @@ int port = 8089;
 
 WiFiClient client;
 WiFiUDP udp;
-
-
-//Ambient ambient;
-
-const char* ssid = "SSID";         // WiFi SSID
-const char* password = "pass";     // WiFi パスワード
 
 extern const unsigned char m5stack_startup_music[];
 
@@ -59,17 +54,20 @@ void setup() {
     ledcSetup(ledChannel, freq, resolution);
     ledcAttachPin(servo_pin, ledChannel);
     ledcWrite(ledChannel, 256);  // 0°
-    WiFi.begin(ssid, password);              //  Wi-Fi APに接続
-      while (WiFi.status() != WL_CONNECTED) {  //  Wi-Fi AP接続待ち
-    delay(500);
-    }
-    Serial.print("WiFi connected\r\nIP address: ");
-    Serial.println(WiFi.localIP());    
 
-  Serial.print("WiFi connected\r\nIP address: ");
-  Serial.println(WiFi.localIP()); 
     for(int i=0; i<17; i=i+8) {
     chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+  }
+  WiFi.mode(WIFI_STA);
+  WiFiManager wm;
+  bool res;
+  res=wm.autoConnect("M5Stick-C_CO2_Speaker","");
+  if(!res) {
+    delay(3000);
+    //ESP.restart();
+    delay(5000);
+  } else{
+    Serial.println(WiFi.localIP());
   }
 }
 void playMusic(const uint8_t* music_data, uint16_t sample_rate) {
